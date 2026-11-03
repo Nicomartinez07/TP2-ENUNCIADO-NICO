@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-enum resultado { SEGUIR, TERMINAR, ERROR, NO_EXISTE };
+enum menu_resultado { MENU_SEGUIR, MENU_TERMINAR, MENU_ERROR, MENU_NO_EXISTE };
 
-enum direccion { SIGUIENTE, ANTERIOR };
+enum menu_direccion { MENU_SIGUIENTE, MENU_ANTERIOR };
 
 typedef struct menu menu_t;
 
@@ -25,7 +25,7 @@ menu_t *menu_crear();
 /*
  * Inserta un elemento en el menu y devuelve true si pudo.
  * 
- * En caso de insertar dos elementos con igual tecla retorna false.
+ * En caso de insertar dos elementos con igual tecla retorna false. Se crea una copia del texto ingresado que posteriormente es liberado por el TDA.
  *
  * Si no puede insertar devuelve false.
  */
@@ -41,7 +41,7 @@ size_t menu_cantidad(menu_t *menu);
  *
  * Devuelve false en caso de error
  */
-bool menu_mover_seleccion(menu_t *menu, enum direccion direccion);
+bool menu_mover_seleccion(menu_t *menu, enum menu_direccion direccion);
 
 /*
  * Deveulve la posicion de la opcion seleccionada.
@@ -51,18 +51,26 @@ size_t menu_seleccionada(menu_t *menu);
 
 /*
  * Ejecuta la opcion relacionada a la tecla ingresada.
+ *
+ * Devuelve seguir o terminar dependiendo lo que devuelve la acción,
+ * no_existe si no hay una opcion con esa tecla asociada, o error si menu es NULL.
  */
-enum resultado menu_ejecutar(menu_t *menu, char tecla);
+enum menu_resultado menu_ejecutar(menu_t *menu, char tecla);
 
 /*
  * Ejecuta la opcion seleccionada del menu.
+ * 
+ * Devuelve seguir o terminar dependiendo lo que devuelve la acción,
+ * no_existe si el menú está vacío, o error si menu es NULL.
  */
-enum resultado menu_ejecutar_seleccionada(menu_t *menu);
+enum menu_resultado menu_ejecutar_seleccionada(menu_t *menu);
 
 /*
- * Recorre el menu aplicando la función f. Devuelve la cantidad de veces que fue invocada f.
+ * Recorre el menu aplicando la función f.
  *
  * Si f devuevle false, se deja de iterar.
+ *
+ * Devuelve la cantidad de veces que fue invocada f o 0 en caso de error
  */
 size_t menu_iterar(menu_t *menu, bool (*f)(char tecla, char *texto, bool seleccionada, void *contexto), void *extra);
 
@@ -71,4 +79,4 @@ size_t menu_iterar(menu_t *menu, bool (*f)(char tecla, char *texto, bool selecci
  */
 void menu_destruir(menu_t *menu);
 
-#endif 
+#endif // MENU_H_
