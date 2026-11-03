@@ -106,16 +106,13 @@ Explicar las decisiones de diseño y/o las complejidades de implementación que 
 ## 4. Decisiones de diseño y/o complejidades de implementación (EJEMPLO)
 La mayor complejidad en el TP se encuentra en la función `foo` que requiere hacer...; es por esto que decidí.... Además, decidí que el programa haga... para mejorar la implementación.
 
-## 5. Respuestas a las preguntas teóricas
-Deberás incluir en esta sección las respuestas a las preguntas teóricas indicadas en el [enunciado](./ENUNCIADO.md) del TP.
+## 5. Respuestas a las preguntas teóricas 
 
-## 5. Respuestas a las preguntas teóricas (EJEMPLO)
-
-### 5.1. ¿Porqué...?
+### 5.1 Cambios en el TP1
 Respondido en su respectiva sección.
 
-### 5.2 ¿Cómo...?
+### 5.2 Menu: 
 Para implementar el....
 
-### 5.3 ¿Cuál fue el...?
+### 5.3 TP2
 El motivo fue....
