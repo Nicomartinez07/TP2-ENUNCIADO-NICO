@@ -3,7 +3,7 @@ CFLAGS =-std=c99 -Wall -Wconversion -Wtype-limits -pedantic -Werror -O0 -g
 CC = gcc
 PUERTO = 8080
 
-all: clean valgrind-demo
+all: clean_demo valgrind-demo
 
 valgrind-demo: demo
 	valgrind $(VALGRIND_FLAGS) ./demo $(PUERTO)
@@ -11,5 +11,19 @@ valgrind-demo: demo
 demo: main.c extra/engine.c extra/engine.h
 	$(CC) $(CFLAGS) main.c extra/engine.c -o demo
 
-clean:
+valgrind_alumno: pruebas_alumno
+	valgrind $(VALGRIND_FLAGS) ./pruebas_alumno
+
+pruebas: pruebas_alumno
+	./pruebas_alumno
+
+compilar_programa_y_pruebas_alumno: src/*.c pruebas/*.c
+	$(CC) $(CFLAGS) src/*.c pruebas/*.c -o pruebas_alumno
+	
+clean_demo:
 	rm -f demo
+
+clean:
+	rm -f pruebas_alumno
+
+

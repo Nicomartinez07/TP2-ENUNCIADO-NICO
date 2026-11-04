@@ -13,6 +13,11 @@ typedef struct opcion {
     void *contexto;
 } opcion_t ;
 
+void destruir_cada_opcion(opcion_t *opcion) {
+    free(opcion->texto);
+    free(opcion);
+}
+
 /*
  * Copia el texto recibido por parametros
  */
@@ -26,6 +31,14 @@ char *copiar_texto(char *texto)
 	strcpy(copia, texto);
 
 	return copia;
+}
+
+
+int comparar_teclas(void *elemento, void *buscado) {
+    opcion_t *opcion = elemento;
+    char *tecla = buscado;
+
+    return (opcion->tecla - *tecla);
 }
 
 
@@ -53,7 +66,7 @@ menu_t *menu_crear() {
  * Si no puede insertar devuelve false.
  */
 bool menu_agregar(menu_t *menu, char tecla, char *texto, menu_accion_t funcion, void *contexto) {
-    if(!menu || !texto || !funcion) return NULL;
+    if(!menu || !texto || !funcion) return false;
 
     bool pudo_insertar = true;
 
@@ -67,13 +80,18 @@ bool menu_agregar(menu_t *menu, char tecla, char *texto, menu_accion_t funcion, 
         return false;
     }
 
-    opcion->tecla = tecla;
-    opcion->texto = copia;
-    opcion->seleccionada = false;
-    opcion->f = funcion;
-    opcion->contexto = contexto;
+    opcion_t *encontrada = NULL;
+    if(lista_buscar(menu->opciones, &tecla, comparar_teclas, &encontrada)) {
+        pudo_insertar = false;
+    } else {
+        opcion->tecla = tecla;
+        opcion->texto = copia;
+        opcion->seleccionada = false;
+        opcion->f = funcion;
+        opcion->contexto = contexto;
 
-    pudo_insertar = lista_insertar(menu->opciones, opcion, lista_cantidad(menu->opciones));
+        pudo_insertar = lista_insertar(menu->opciones, opcion, lista_cantidad(menu->opciones));
+    }
 
     if(!pudo_insertar) {
         free(copia);
@@ -86,7 +104,11 @@ bool menu_agregar(menu_t *menu, char tecla, char *texto, menu_accion_t funcion, 
 /*
  * Devuelve la cantidad de opciones que hay en el menu. Devuelve 0 en caso de error
  */
-size_t menu_cantidad(menu_t *menu);
+size_t menu_cantidad(menu_t *menu) {
+    if(!menu) return 0;
+
+    return lista_cantidad(menu->opciones);
+}
 
 /*
  * Mueve la selección a la opción siguiente o anterior. Devuelve true si se pudo realizar el movimiento.
@@ -96,10 +118,27 @@ size_t menu_cantidad(menu_t *menu);
 bool menu_mover_seleccion(menu_t *menu, enum menu_direccion direccion);
 
 /*
- * Deveulve la posicion de la opcion seleccionada.
+ * Devuelve la posicion de la opcion seleccionada.
  * En caso de error devuelve 0.
  */
-size_t menu_seleccionada(menu_t *menu);
+size_t menu_seleccionada(menu_t *menu) {
+    if(!menu) return 0;
+
+    bool encontrada = false;
+    size_t posicion = 0;
+    size_t i = 0;
+
+    while(i < menu_cantidad(menu) && !encontrada) {
+        opcion_t *actual = lista_obtener(menu->opciones, i);
+        if(actual->seleccionada) {
+            encontrada = true;
+            posicion = i;
+        }
+        i++;
+    }
+
+    return posicion;
+}
 
 /*
  * Ejecuta la opcion relacionada a la tecla ingresada.
@@ -124,9 +163,28 @@ enum menu_resultado menu_ejecutar_seleccionada(menu_t *menu);
  *
  * Devuelve la cantidad de veces que fue invocada f o 0 en caso de error
  */
-size_t menu_iterar(menu_t *menu, bool (*f)(char tecla, char *texto, bool seleccionada, void *contexto), void *extra);
+size_t menu_iterar(menu_t *menu, bool (*f)(char tecla, char *texto, bool seleccionada, void *contexto), void *extra) {
+    if (!menu || !f)
+		return 0;
+	size_t contador = 0;
+	bool seguir = true;
+
+	while (contador < lista_cantidad(menu->opciones) && seguir) {
+        opcion_t *opcion = lista_obtener(menu->opciones, contador);
+		seguir = f(opcion->tecla, opcion->texto, opcion->seleccionada, extra);
+		contador++;
+	}
+
+	return contador;
+}
 
 /*
  * Libera el menu y toda la memoria asociada.
  */
-void menu_destruir(menu_t *menu);
+void menu_destruir(menu_t *menu) {
+    if(!menu) return;
+
+    lista_destruir_todo(menu->opciones, destruir_cada_opcion);
+    free(menu);
+    return;
+}
