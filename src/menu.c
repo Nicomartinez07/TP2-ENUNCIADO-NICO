@@ -1,5 +1,9 @@
-#include "src/menu.h"
-#include "src/lista.h"
+#include "menu.h"
+#include "lista.h"
+
+
+#include <stdlib.h>
+#include <string.h>
 
 struct menu {
     lista_t *opciones;
@@ -17,6 +21,8 @@ void destruir_cada_opcion(opcion_t *opcion) {
     free(opcion->texto);
     free(opcion);
 }
+
+const int NO_ENCONTRADO = -1;
 
 /*
  * Copia el texto recibido por parametros
@@ -41,6 +47,20 @@ int comparar_teclas(void *elemento, void *buscado) {
     return (opcion->tecla - *tecla);
 }
 
+enum menu_resultado ejecutar_opcion(opcion_t *opcion) {
+    if(!opcion) return MENU_NO_EXISTE;
+
+    enum menu_resultado resultado_de_ejecutar;
+
+    bool seguir = f(opcion->tecla, opcion->texto, opcion->seleccionada, NULL);
+    if(seguir) {
+        resultado_de_ejecutar = MENU_SEGUIR;
+    } else {
+        resultado_de_ejecutar = MENU_TERMINAR;
+    }
+
+    return resultado_de_ejecutar;
+}
 
 /*
  * Crea un menu y lo devuelve. Devuelve NULL en caso de error.
@@ -111,27 +131,21 @@ size_t menu_cantidad(menu_t *menu) {
 }
 
 /*
- * Mueve la selección a la opción siguiente o anterior. Devuelve true si se pudo realizar el movimiento.
- *
- * Devuelve false en caso de error
- */
-bool menu_mover_seleccion(menu_t *menu, enum menu_direccion direccion);
-
-/*
- * Devuelve la posicion de la opcion seleccionada.
+ * Devuelve la posicion de la opcion seleccionada. Encontrada tiene que estar inicializada en false. 
  * En caso de error devuelve 0.
  */
-size_t menu_seleccionada(menu_t *menu) {
-    if(!menu) return 0;
+size_t menu_seleccionada(menu_t *menu, bool *encontrada) {
+    if(!menu || !encontrada) return 0;
 
-    bool encontrada = false;
     size_t posicion = 0;
     size_t i = 0;
 
-    while(i < menu_cantidad(menu) && !encontrada) {
+    while(i < menu_cantidad(menu) && !(*encontrada)) {
         opcion_t *actual = lista_obtener(menu->opciones, i);
         if(actual->seleccionada) {
-            encontrada = true;
+            if(encontrada) {
+                *encontrada = true;
+            }
             posicion = i;
         }
         i++;
@@ -146,7 +160,46 @@ size_t menu_seleccionada(menu_t *menu) {
  * Devuelve seguir o terminar dependiendo lo que devuelve la acción,
  * no_existe si no hay una opcion con esa tecla asociada, o error si menu es NULL.
  */
-enum menu_resultado menu_ejecutar(menu_t *menu, char tecla);
+enum menu_resultado menu_ejecutar(menu_t *menu, char tecla) {
+    if(!menu) return MENU_ERROR;
+
+    if(menu_cantidad(menu) == 0) return MENU_NO_EXISTE;
+
+    opcion_t *opcion;
+    bool seguir = true;
+    int resultado_busqueda = lista_buscar(menu->opciones, &tecla, comparar_teclas, &opcion);
+
+    if(resultado_busqueda == NO_ENCONTRADO) return MENU_NO_EXISTE;
+
+    return ejecutar_opcion(opcion);
+}
+
+/*
+ * Mueve la selección a la opción siguiente o anterior. Devuelve true si se pudo realizar el movimiento.
+ *
+ * Devuelve false en caso de error
+ */
+bool menu_mover_seleccion(menu_t *menu, enum menu_direccion direccion) {
+    if(!menu || (direccion != MENU_ANTERIOR && direccion != MENU_SIGUIENTE)) return false;
+
+    bool encontrada = false;
+    size_t indice_seleccionada_actual = menu_seleccionada(menu, &encontrada);
+    if(!encontrada) return false;
+
+    opcion_t *actual = lista_obtener(menu->opciones, indice_seleccionada_actual);
+    actual->seleccionada = false;
+    opcion_t *reemplazado = lista_reemplazar(menu->opciones, actual, indice_seleccionada_actual);
+    
+    if(direccion == MENU_SEGUIR) {
+        opcion_t *siguiente = lista_obtener(menu->opciones, indice_seleccionada_actual + 1);
+        siguiente->seleccionada = true;
+        opcion_t *siguiente_reemplazado = lista_reemplazar(menu->opciones, actual, indice_seleccionada_actual + 1);
+    } else {
+        opcion_t *anterior = lista_obtener(menu->opciones, indice_seleccionada_actual - 1);
+        anterior->seleccionada = true;
+        opcion_t *anterior_reemplazado = lista_reemplazar(menu->opciones, actual, indice_seleccionada_actual - 1);
+    }
+}
 
 /*
  * Ejecuta la opcion seleccionada del menu.
@@ -154,7 +207,20 @@ enum menu_resultado menu_ejecutar(menu_t *menu, char tecla);
  * Devuelve seguir o terminar dependiendo lo que devuelve la acción,
  * no_existe si el menú está vacío, o error si menu es NULL.
  */
-enum menu_resultado menu_ejecutar_seleccionada(menu_t *menu);
+enum menu_resultado menu_ejecutar_seleccionada(menu_t *menu) {
+    if(!menu) return MENU_ERROR;
+
+    if(menu_cantidad(menu) == 0) return MENU_NO_EXISTE;
+
+    bool encontro_opcion_seleccionada = false;
+    bool seguir = true;
+    size_t posicion_seleccionada = menu_seleccionada(menu, &encontro_opcion_seleccionada);
+    if(!encontro_opcion_seleccionada) return MENU_NO_EXISTE;
+
+    opcion_t *opcion = lista_obtener(menu->opciones, posicion_seleccionada);
+
+    return ejecutar_opcion(opcion);
+}
 
 /*
  * Recorre el menu aplicando la función f.
