@@ -1,28 +1,38 @@
 #include "menu.h"
 #include "lista.h"
-
+#define NO_ENCONTRADO -1
 
 #include <stdlib.h>
 #include <string.h>
 
+
 struct menu {
     lista_t *opciones;
+    size_t indice_seleccionada;
 };
 
 typedef struct opcion {
 	char tecla;
     char *texto;
-    bool seleccionada;
-    int (*f)(void* , void*);
+    int (*f)(void*);
     void *contexto;
 } opcion_t ;
 
-void destruir_cada_opcion(opcion_t *opcion) {
+void destruir_cada_opcion(void *elemento) {
+    opcion_t *opcion = elemento;
     free(opcion->texto);
     free(opcion);
 }
 
-const int NO_ENCONTRADO = -1;
+/*
+ * Busca la opción asociada a la tecla. Devuelve NULL si no existe.
+ */
+opcion_t *buscar_opcion(menu_t *menu, char tecla)
+{
+	void *encontrada = NULL;
+	lista_buscar(menu->opciones, &tecla, comparar_teclas, &encontrada);
+	return encontrada;
+}
 
 /*
  * Copia el texto recibido por parametros
@@ -52,8 +62,8 @@ enum menu_resultado ejecutar_opcion(opcion_t *opcion) {
 
     enum menu_resultado resultado_de_ejecutar;
 
-    bool seguir = f(opcion->tecla, opcion->texto, opcion->seleccionada, NULL);
-    if(seguir) {
+    int seguir = opcion->f(opcion->contexto);
+    if(seguir == 0) {
         resultado_de_ejecutar = MENU_SEGUIR;
     } else {
         resultado_de_ejecutar = MENU_TERMINAR;
@@ -75,6 +85,8 @@ menu_t *menu_crear() {
         return NULL;
     }
 
+    menu->indice_seleccionada = 0;
+
     return menu;
 }
 
@@ -88,37 +100,27 @@ menu_t *menu_crear() {
 bool menu_agregar(menu_t *menu, char tecla, char *texto, menu_accion_t funcion, void *contexto) {
     if(!menu || !texto || !funcion) return false;
 
-    bool pudo_insertar = true;
-
-
-    char *copia = copiar_texto(texto);
-    if(!copia) return false; 
+    if(buscar_opcion(menu, tecla)) return false;
 
     opcion_t *opcion = malloc(sizeof(opcion_t));
-    if(!opcion) {
-        free(copia);
+    if(!opcion) return false;
+
+    opcion->texto = copiar_texto(texto);
+    if(!opcion->texto) {
+        free(opcion);
         return false;
     }
 
-    opcion_t *encontrada = NULL;
-    if(lista_buscar(menu->opciones, &tecla, comparar_teclas, &encontrada)) {
-        pudo_insertar = false;
-    } else {
-        opcion->tecla = tecla;
-        opcion->texto = copia;
-        opcion->seleccionada = false;
-        opcion->f = funcion;
-        opcion->contexto = contexto;
+    opcion->tecla = tecla;
+    opcion->f = funcion;
+    opcion->contexto = contexto;
 
-        pudo_insertar = lista_insertar(menu->opciones, opcion, lista_cantidad(menu->opciones));
+    if(!lista_insertar(menu->opciones, opcion, lista_cantidad(menu->opciones))) {
+        destruir_cada_opcion(opcion);
+        return false;
     }
 
-    if(!pudo_insertar) {
-        free(copia);
-        free(opcion);
-    }
-
-    return pudo_insertar;
+    return true;
 }
 
 /*
@@ -131,27 +133,33 @@ size_t menu_cantidad(menu_t *menu) {
 }
 
 /*
- * Devuelve la posicion de la opcion seleccionada. Encontrada tiene que estar inicializada en false. 
- * En caso de error devuelve 0.
+ * Mueve la selección a la opción siguiente o anterior. Devuelve true si se pudo realizar el movimiento.
+ *
+ * Devuelve false en caso de error
  */
-size_t menu_seleccionada(menu_t *menu, bool *encontrada) {
-    if(!menu || !encontrada) return 0;
+bool menu_mover_seleccion(menu_t *menu, enum menu_direccion direccion) {
+    size_t cantidad = menu_cantidad(menu);
+    if(cantidad == 0) return false;
 
-    size_t posicion = 0;
-    size_t i = 0;
-
-    while(i < menu_cantidad(menu) && !(*encontrada)) {
-        opcion_t *actual = lista_obtener(menu->opciones, i);
-        if(actual->seleccionada) {
-            if(encontrada) {
-                *encontrada = true;
-            }
-            posicion = i;
-        }
-        i++;
+    if(direccion == MENU_SIGUIENTE) {
+        menu->indice_seleccionada = (menu->indice_seleccionada + 1) % cantidad;
+    } else if (direccion == MENU_ANTERIOR){
+        menu->indice_seleccionada = (menu->indice_seleccionada + cantidad - 1) % cantidad;
+    } else {
+        return false;
     }
 
-    return posicion;
+    return true;
+}
+
+/*
+ * Devuelve la posicion de la opcion seleccionada. 
+ * En caso de error devuelve 0.
+ */
+size_t menu_seleccionada(menu_t *menu) {
+    if(!menu) return 0;
+
+    return menu->indice_seleccionada;
 }
 
 /*
@@ -163,43 +171,9 @@ size_t menu_seleccionada(menu_t *menu, bool *encontrada) {
 enum menu_resultado menu_ejecutar(menu_t *menu, char tecla) {
     if(!menu) return MENU_ERROR;
 
-    if(menu_cantidad(menu) == 0) return MENU_NO_EXISTE;
-
-    opcion_t *opcion;
-    bool seguir = true;
-    int resultado_busqueda = lista_buscar(menu->opciones, &tecla, comparar_teclas, &opcion);
-
-    if(resultado_busqueda == NO_ENCONTRADO) return MENU_NO_EXISTE;
-
-    return ejecutar_opcion(opcion);
+    return ejecutar_opcion(buscar_opcion(menu, tecla));
 }
 
-/*
- * Mueve la selección a la opción siguiente o anterior. Devuelve true si se pudo realizar el movimiento.
- *
- * Devuelve false en caso de error
- */
-bool menu_mover_seleccion(menu_t *menu, enum menu_direccion direccion) {
-    if(!menu || (direccion != MENU_ANTERIOR && direccion != MENU_SIGUIENTE)) return false;
-
-    bool encontrada = false;
-    size_t indice_seleccionada_actual = menu_seleccionada(menu, &encontrada);
-    if(!encontrada) return false;
-
-    opcion_t *actual = lista_obtener(menu->opciones, indice_seleccionada_actual);
-    actual->seleccionada = false;
-    opcion_t *reemplazado = lista_reemplazar(menu->opciones, actual, indice_seleccionada_actual);
-    
-    if(direccion == MENU_SEGUIR) {
-        opcion_t *siguiente = lista_obtener(menu->opciones, indice_seleccionada_actual + 1);
-        siguiente->seleccionada = true;
-        opcion_t *siguiente_reemplazado = lista_reemplazar(menu->opciones, actual, indice_seleccionada_actual + 1);
-    } else {
-        opcion_t *anterior = lista_obtener(menu->opciones, indice_seleccionada_actual - 1);
-        anterior->seleccionada = true;
-        opcion_t *anterior_reemplazado = lista_reemplazar(menu->opciones, actual, indice_seleccionada_actual - 1);
-    }
-}
 
 /*
  * Ejecuta la opcion seleccionada del menu.
@@ -210,14 +184,7 @@ bool menu_mover_seleccion(menu_t *menu, enum menu_direccion direccion) {
 enum menu_resultado menu_ejecutar_seleccionada(menu_t *menu) {
     if(!menu) return MENU_ERROR;
 
-    if(menu_cantidad(menu) == 0) return MENU_NO_EXISTE;
-
-    bool encontro_opcion_seleccionada = false;
-    bool seguir = true;
-    size_t posicion_seleccionada = menu_seleccionada(menu, &encontro_opcion_seleccionada);
-    if(!encontro_opcion_seleccionada) return MENU_NO_EXISTE;
-
-    opcion_t *opcion = lista_obtener(menu->opciones, posicion_seleccionada);
+    opcion_t *opcion = lista_obtener(menu->opciones, menu->indice_seleccionada);
 
     return ejecutar_opcion(opcion);
 }
@@ -237,7 +204,7 @@ size_t menu_iterar(menu_t *menu, bool (*f)(char tecla, char *texto, bool selecci
 
 	while (contador < lista_cantidad(menu->opciones) && seguir) {
         opcion_t *opcion = lista_obtener(menu->opciones, contador);
-		seguir = f(opcion->tecla, opcion->texto, opcion->seleccionada, extra);
+		seguir = f(opcion->tecla, opcion->texto, extra);
 		contador++;
 	}
 
@@ -252,5 +219,4 @@ void menu_destruir(menu_t *menu) {
 
     lista_destruir_todo(menu->opciones, destruir_cada_opcion);
     free(menu);
-    return;
 }
