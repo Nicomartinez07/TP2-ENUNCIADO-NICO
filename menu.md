@@ -1,7 +1,6 @@
-- Explique cómo funciona el menú y cómo abstrae el problema de la independencia de la interfaz gráfica.
-
-
-
+# ¿Que es el menu? 
+El menu es un TDA que unicamente se encarga de guardar opciones, operar con la seleccion y responde preguntas. El problema que viene a solucionar es que en este determiando TP, tengo dos interfaces para un mismo menu. Si lo pensaramos de una forma tradicional en donde cada una tiene sus medios y sus formas, deberia realizar 2 funciones por cada misma accion que quiero realizar, una para una interfaz grafica y la otra para la consola. 
+Entonces decidi realizar el menu de la forma una forma generica de manera tal que pueda ser consumido por cualquier interfaz/usuario que quiera emplear el menu. Para llevar esto a cabo, el Menu no se puede encargar de las tipicas acciones, como leer, dibujar, escribir, el TDA unicamente cumple la opcion de Modelo, se encarga de ejecutar acciones, mediante punteros a funcion y devolver los resultados obtenidos para que la interfaz sea quien decide hacer con los resultados obtenidos
 
 # Estructura
 El menu es un TDA compuesto por una lista de opciones y un indice el cual indica cual es la posicion de la opcion seleccionada actualmente. 
@@ -31,7 +30,8 @@ Por ende opte que la seleccion sea un indice asociado a la opcion seleccionada e
 * `menu_seleccionada` tiene una complejidad de $O(1)$ debido a que unicamente consulta el campo que indica cual opcion esta seleccionada.
 * `menu_ejecutar` tiene una complejidad de $O(n)$ ya que a pesar de que ejecutar una determinada opcion conlleva una complejidad $O(1)$, primero hay que verificar que la tecla ingresada este asociada a una opcion, es por esto que se realiza una busqueda en la lista. Los peores casos al realizar esa busqueda es recorrer todos los elementos y que el elemento buscado se encuentre en la ultima posicion o que directamente no se encuentre. Ambos casos realizan N recorridos, es por esto que la complejidad termina siendo $O(n)$.
 * `menu_ejecutar_seleccionada` tiene una complejidad de $O(n)$ debido a que se realiza la obtencion de la opcion seleccionada asociada a un indice. Para esta obtencion se realiza un recorrido hasta la posicion obtenida. El peor de los casos es que la posicion hasta la cual se tiene que iterar, sea la ultima posicion posible, y para llegar a ella hay que recorrer N elementos. 
-* `menu_iterar` tiene una complejidad de $O(n)$ ya que se itera el menu aplicandole la funcion, hasta que algun elemento devuelve false. El peor caso es que ningun elemento devuelva false por ende se recorren todos los elementos.
+* `menu_iterar` tiene una complejidad de $O(n)$ 
+
 * `menu_destruir` tiene una complejidad de $O(n)$ ya que para liberar el menu, se necesita primero destruir y liberar cada elemento de la lista. Para esto se lleva a cabo un recorrido por los N elementos contenidos en la lista. 
 
 
