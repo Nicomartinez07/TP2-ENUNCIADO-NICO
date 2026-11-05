@@ -47,7 +47,7 @@ bool menu_mover_seleccion(menu_t *menu, enum menu_direccion direccion);
  * Deveulve la posicion de la opcion seleccionada. Encontrada tiene que estar inicializada en false.
  * En caso de error devuelve 0.
  */
-size_t menu_seleccionada(menu_t *menu, bool *encontrada);
+size_t menu_seleccionada(menu_t *menu);
 
 /*
  * Ejecuta la opcion relacionada a la tecla ingresada.

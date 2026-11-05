@@ -49,7 +49,9 @@ char *copiar_texto(char *texto)
 	return copia;
 }
 
-
+/*
+ * Dado un elemento, y una tecla, retorna el resultado de la comparacion entre ambos.
+ */
 int comparar_teclas(void *elemento, void *buscado) {
     opcion_t *opcion = elemento;
     char *tecla = buscado;
@@ -57,6 +59,9 @@ int comparar_teclas(void *elemento, void *buscado) {
     return (opcion->tecla - *tecla);
 }
 
+/*
+ * Dada una opcion, ejecuta su accion utilizando el contexto. Retorna Seguir si el resultado de la opcion es 0, terminar en caso contrario. En caso de error devuelve no existe.
+ */
 enum menu_resultado ejecutar_opcion(opcion_t *opcion) {
     if(!opcion) return MENU_NO_EXISTE;
 
@@ -204,8 +209,12 @@ size_t menu_iterar(menu_t *menu, bool (*f)(char tecla, char *texto, bool selecci
 
 	while (contador < lista_cantidad(menu->opciones) && seguir) {
         opcion_t *opcion = lista_obtener(menu->opciones, contador);
-		seguir = f(opcion->tecla, opcion->texto, extra);
-		contador++;
+		if(!opcion) {
+			seguir = false;
+		} else {
+			seguir = f(opcion->tecla, opcion->texto, contador == menu->indice_seleccionada, extra);
+			contador++;
+		}
 	}
 
 	return contador;
