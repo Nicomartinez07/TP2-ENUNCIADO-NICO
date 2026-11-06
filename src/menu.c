@@ -18,6 +18,16 @@ typedef struct opcion {
     void *contexto;
 } opcion_t ;
 
+typedef struct {
+    bool (*f)(char tecla, const char *texto, bool seleccionada, void *extra);
+	void *extra;
+	size_t posicion;
+	size_t indice_seleccionada;
+} contexto_para_iterar_t;
+
+/*
+ * Libera la opcion, y el texto asociado a la opcion. 
+ */
 void destruir_cada_opcion(void *elemento) {
     opcion_t *opcion = elemento;
     free(opcion->texto);
@@ -32,6 +42,20 @@ opcion_t *buscar_opcion(menu_t *menu, char tecla)
 	void *encontrada = NULL;
 	lista_buscar(menu->opciones, &tecla, comparar_teclas, &encontrada);
 	return encontrada;
+}
+
+/*
+ * Devuelve el resultado de aplicar la funcion de la opcion, para esto utiliza el contexto brindado. 
+ */
+bool iterar_opcion(void *elemento, void *contexto)
+{
+    opcion_t *opcion = elemento;
+    contexto_para_iterar_t *datos = contexto;
+
+    bool seleccionada = datos->posicion == datos->indice_seleccionada;
+    datos->posicion++;
+
+    return datos->f(opcion->tecla, opcion->texto, seleccionada, datos->extra);
 }
 
 /*
@@ -204,20 +228,14 @@ enum menu_resultado menu_ejecutar_seleccionada(menu_t *menu) {
 size_t menu_iterar(menu_t *menu, bool (*f)(char tecla, char *texto, bool seleccionada, void *contexto), void *extra) {
     if (!menu || !f)
 		return 0;
-	size_t contador = 0;
-	bool seguir = true;
 
-	while (contador < lista_cantidad(menu->opciones) && seguir) {
-        opcion_t *opcion = lista_obtener(menu->opciones, contador);
-		if(!opcion) {
-			seguir = false;
-		} else {
-			seguir = f(opcion->tecla, opcion->texto, contador == menu->indice_seleccionada, extra);
-			contador++;
-		}
-	}
+	contexto_para_iterar_t contexto = { 
+                .f = f,
+				.extra = extra,
+				.posicion = 0,
+				.indice_seleccionada = menu->indice_seleccionada };
 
-	return contador;
+	return lista_iterar(menu->opciones, iterar_opcion, &contexto);
 }
 
 /*
