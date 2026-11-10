@@ -19,7 +19,7 @@ typedef struct opcion {
 } opcion_t ;
 
 typedef struct {
-    bool (*f)(char tecla, const char *texto, bool seleccionada, void *extra);
+    bool (*f)(char tecla, char *texto, bool seleccionada, void *extra);
 	void *extra;
 	size_t posicion;
 	size_t indice_seleccionada;
@@ -32,6 +32,16 @@ void destruir_cada_opcion(void *elemento) {
     opcion_t *opcion = elemento;
     free(opcion->texto);
     free(opcion);
+}
+
+/*
+ * Dado un elemento, y una tecla, retorna el resultado de la comparacion entre ambos.
+ */
+int comparar_teclas(void *elemento, void *buscado) {
+    opcion_t *opcion = elemento;
+    char *tecla = buscado;
+
+    return (opcion->tecla - *tecla);
 }
 
 /*
@@ -71,16 +81,6 @@ char *copiar_texto(char *texto)
 	strcpy(copia, texto);
 
 	return copia;
-}
-
-/*
- * Dado un elemento, y una tecla, retorna el resultado de la comparacion entre ambos.
- */
-int comparar_teclas(void *elemento, void *buscado) {
-    opcion_t *opcion = elemento;
-    char *tecla = buscado;
-
-    return (opcion->tecla - *tecla);
 }
 
 /*

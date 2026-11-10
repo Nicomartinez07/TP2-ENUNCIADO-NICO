@@ -10,7 +10,8 @@ int main()
 	pa2m_nuevo_grupo("Pruebas del Menu");
 	pruebas_menu();
 
-
+	pa2m_nuevo_grupo("");
+	pa2m_nuevo_grupo("");
 	pa2m_nuevo_grupo("Pruebas del TP1");
 	pruebas_leer_linea();
 

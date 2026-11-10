@@ -1,6 +1,6 @@
 #include "tp1.h"
-#include "../../src/tp1_corregido/leer_linea.h"
-#include "../../src/lista.h"
+#include "../src/leer_linea.h"
+#include "../src/lista.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,5 +1,5 @@
-#include "../../src/tp1_corregido/leer_linea.h"
-#include "../../src/tp1_corregido/tp1.h"
+#include "../src/leer_linea.h"
+#include "../src/tp1.h"
 #include "pa2m.h"
 #include "pruebas.h"
 #include <stdbool.h>
