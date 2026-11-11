@@ -24,5 +24,8 @@ int main()
 
 	pruebas_iterar();
 
+	pa2m_nuevo_grupo("Pruebas del juego");
+	pruebas_juego();
+
 	return pa2m_mostrar_reporte();
 }

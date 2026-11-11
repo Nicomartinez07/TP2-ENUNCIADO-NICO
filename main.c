@@ -1,5 +1,9 @@
 #include "extra/engine.h"
 #include <string.h>
+#include <stdio.h>
+#include "src/consola.h"
+
+#include "src/tp1.h"
 
 // Este es un main de ejemplo de uso de engine.h
 // Al igual que el informe, es un template
@@ -11,6 +15,11 @@
 #define LILA 0xA700A7
 #define MAX_ENTRADA 12
 
+#define ERROR -1
+#define EXITO 0 
+
+const int CANTIDAD_MINIMA_PARAMETROS = 2;
+/*
 enum modo { MODO_MENU, MODO_ENTRADA, MODO_JUEGO };
 enum direccion { DIR_ABAJO, DIR_ARRIBA, DIR_DERECHA, DIR_IZQUIERDA };
 
@@ -190,6 +199,7 @@ int procesar_frame(const struct entrada *e, pantalla_t *p, void *ctx)
 		return dibujar_entrada(e, p, ctx);
 }
 
+
 int main(int argc, char *argv[])
 {
 	struct juego juego;
@@ -204,6 +214,34 @@ int main(int argc, char *argv[])
 
 	if (engine_correr(&config, procesar_frame, &juego) != 0)
 		return 1;
+
+	return 0;
+}
+*/
+
+
+int main(int argc, char *argv[])
+{
+	if (argc < CANTIDAD_MINIMA_PARAMETROS) {
+		printf("Se deben ingresar como minimo 2 parametros para el correcto "
+		       "funcionamiento del juego.\n Uso: ./ejecutable <archivo_a_leer> "
+		       "<puerto_a_ejecutar>\n");
+		return ERROR;
+	}
+
+	tp1_t *pokedex = tp1_leer_archivo(argv[1]);
+	if (!pokedex) {
+		return ERROR;
+	}
+
+	if(argc >= 3) {
+		printf("Todavia no se desarrollo el modo engine.\n");
+		//grafico_ejecutar(pokedex, puerto);
+	} else {
+		consola_ejecutar(pokedex);
+	}
+
+	tp1_destruir(pokedex);
 
 	return 0;
 }

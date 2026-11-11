@@ -3,6 +3,8 @@ CFLAGS =-std=c99 -Wall -Wconversion -Wtype-limits -pedantic -Werror -O0 -g
 CC = gcc
 PUERTO = 8080
 
+ARCHIVO ?= ./pruebas/archivos/pokemones.csv
+
 
 TP1_SRC = src/lista.c src/tp1_corregido/leer_linea.c src/tp1_corregido/tp1.c
 TP1_TESTS = pruebas/pa2m.c pruebas/pruebas_alumno.c pruebas/pruebas_tp1/*.c
@@ -26,6 +28,9 @@ pruebas_alumno: src/*.c pruebas/*.c
 
 main: main.c src/*.c
 	$(CC) $(CFLAGS) main.c src/*.c -o main
+
+ejecutar: main
+	./main "$(ARCHIVO)"
 
 
 clean:

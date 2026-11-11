@@ -13,4 +13,6 @@ void pruebas_archivos();
 
 void pruebas_iterar();
 
+void pruebas_juego();
+
 #endif // PRUEBAS_H_
