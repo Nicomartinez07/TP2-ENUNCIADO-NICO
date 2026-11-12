@@ -6,4 +6,4 @@
  * Es indistinto ingresar una tecla en Minuscula o Mayuscula al seleccionar opciones en el menu. La busqueda de un pokemon se hace por el nombre ingresado exacto.
  * En caso de error devuelve false.
  */
-bool consola_ejecutar(tp1_t *pokedex);
+bool grafico_ejecutar(tp1_t *pokedex, char *puerto);
